@@ -1,0 +1,37 @@
+
+POST http://localhost:3001/api/notes
+Content-Type: application/json 
+
+{
+    "content":"esto es una nuevfffa nota de prueba",
+    "important":true,
+}
+
+####
+
+POST http://localhost:3001/api/notes
+Content-Type:application/json
+
+{
+    "content":"adfg",
+    "important":false
+}
+
+###
+PATCH  http://localhost:3001/api/notes/1
+Content-Type: application/json 
+
+{
+    "content":"esto es modificado"
+            
+}
+###
+PUT http://localhost:3001/api/notes/18
+Content-Type: application/json 
+
+{
+    "id":"18",
+    "content":"Hola esta nota es puesta de nuevo",
+    "important":"false"
+
+}
