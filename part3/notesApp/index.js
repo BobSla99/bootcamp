@@ -4,8 +4,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const Note = require("./models/note");
 const contact = require("../phonebookBackend/models/contact");
-const app = express();
 
+const app = express();
 // Note.find({}).then((r) => console.log("co",JSON.stringify(r)));
 
 const errorBody = { error: "Content can't be empty,undefine or null" };
@@ -95,6 +95,7 @@ morgan.token("body", (req, res) => {
 });
 
 //Usando los middlewares.
+app.use(express.static("dist"));
 app.use(cors());
 app.use(express.json());
 app.use(morgan(":method :url :res[content-length] :response-time ms :body"));
