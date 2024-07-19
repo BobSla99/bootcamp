@@ -81,6 +81,8 @@ let notes = [
 const errorHandler = (error, req, res, next) => {
   if (error.name === "CastError") {
     return res.status(400).json({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
   }
   next(error);
 };
@@ -103,8 +105,10 @@ app.use(morgan(":method :url :res[content-length] :response-time ms :body"));
 app.get("/", (req, res) => res.send("<h1>Servidor de notas</h1>"));
 
 //Todas las notas
-app.get("/api/notes", (req, res) => {
-  Note.find({}).then((contacts) => res.json(contacts));
+app.get("/api/notes", (req, res, next) => {
+  Note.find({})
+    .then((contacts) => res.json(contacts))
+    .catch((err) => next(err));
 });
 
 //Obtener una nota de la bd.
@@ -126,48 +130,45 @@ app.get("/api/notes/:id", (req, res, next) => {
 });
 
 //POST
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", (req, res, next) => {
   const body = req.body;
-  if (!body || Object.keys(body).length === 0) {
-    res.status(400).json(errorBody);
-  } else {
-    const newNote = new Note({
-      content: body.content,
-      important: body.important || false,
-    });
-    newNote.save().then((noteReturned) => {
-      console.log("note guardada es :", noteReturned);
+
+  const newNote = new Note({
+    content: body.content,
+    important: body.important || false,
+  });
+  newNote
+    .save()
+    .then((noteReturned) => {
+      // console.log("note guardada es :", noteReturned);
       res.status(201).json(newNote);
-    });
-  }
+    })
+    .catch((err) => next(err));
 });
 
 //PUT
-app.put("/api/notes/:id", (req, res) => {
+app.put("/api/notes/:id", (req, res, next) => {
   let id = req.params.id.toString();
-  id = mongoose.Types.ObjectId(id);
 
   const body = req.body;
   if (!validBody(body)) res.status(400).json(errorBody);
-  if (!note) {
-    //Creala
-    const newNote = {
-      id: id,
+  Note.findByIdAndUpdate(
+    id,
+    {
       content: body.content,
       important: body.important || false,
-    };
-    notes.push(newNote);
-    res.status(201).json(newNote);
-  } else {
-    //actualizalo
-    const newNote = {
-      id: id,
-      content: body.content,
-      important: body.important || false,
-    };
-    notes = notes.map((n) => (n.id === id ? newNote : n));
-    res.status(200).json(newNote);
-  }
+    },
+    { new: true }
+  )
+    .then((noteChanged) => {
+      console.log(noteChanged);
+      if (!noteChanged) {
+        res.status(404).json({ error: "The resource could not be found" });
+      } else {
+        res.status(201).json(noteChanged);
+      }
+    })
+    .catch((err) => next(err));
 });
 
 //PATCH
@@ -208,7 +209,6 @@ app.delete("/api/notes/:id", (req, res, next) => {
 app.use(unKnowEndPoint);
 
 app.use(errorHandler);
-//Generando id
 
 const validBody = (body) => {
   if (!body || Object.keys(body).length === 0) {
